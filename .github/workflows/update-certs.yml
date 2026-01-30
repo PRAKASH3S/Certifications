@@ -1,0 +1,36 @@
+name: Update Certifications JSON
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Generate certifications JSON
+        run: |
+          echo '[' > certifications.json
+          first=true
+          for file in *.{jpg,jpeg,png,pdf,webp}; do
+            if [ -f "$file" ]; then
+              if [ "$first" = true ]; then
+                first=false
+              else
+                echo ',' >> certifications.json
+              fi
+              echo "{\"name\":\"$file\",\"url\":\"https://raw.githubusercontent.com/PRAKASH3S/Certifications/main/$file\"}" >> certifications.json
+            fi
+          done
+          echo ']' >> certifications.json
+      
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add certifications.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update certifications.json"
+          git push
